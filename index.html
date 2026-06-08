@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ultimate Fraction Challenge Desk</title>
+<style>
+  :root {
+    --primary: #2563eb;
+    --success: #16a34a;
+    --background: #f1f5f9;
+    --surface: #ffffff;
+    --text: #0f172a;
+    --border: #cbd5e1;
+    --warning: #ea580c;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--background);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+
+  h1 { margin: 0 0 5px 0; font-size: 26px; }
+  p.subtitle { color: #475569; margin: 0 0 20px 0; text-align: center; max-width: 700px; }
+
+  .lab-desk {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    height: 620px;
+  }
+
+  /* Left Panel: Target Objective & Controls */
+  .control-panel {
+    width: 320px;
+    background: var(--surface);
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  }
+
+  /* Target Fraction Display Box */
+  .target-box {
+    background: #f8fafc;
+    border: 2px dashed #3b82f6;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 110px;
+  }
+  .target-title { font-weight: bold; color: #3b82f6; text-transform: uppercase; font-size: 13px; margin-bottom: 8px; }
+  
+  .fraction-display {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .fraction-line { border-bottom: 4px solid #0f172a; width: 100%; margin: 3px 0; }
+  
+  .mixed-display {
+    display: flex;
+    align-items: center;
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .whole-part { font-size: 50px; margin-right: 5px; color: var(--warning); }
+
+  .section-title {
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    margin: 5px 0 0 0;
+  }
+
+  input[type="text"], input[type="number"], button {
+    font-size: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    font-weight: 600;
+  }
+  
+  input[type="number"]:focus, input[type="text"]:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  button { cursor: pointer; }
+
+  button.spawn-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+  }
+  button.spawn-btn:hover { background: #1d4ed8; }
+  
+  button.next-btn {
+    background: #0f172a;
+    color: white;
+    border: none;
+    font-size: 16px;
+    padding: 12px;
+    margin-top: auto;
+  }
+  button.next-btn:hover { background: #1e293b; }
+
+  /* Right Panel: The actual tabletop workspace */
+  .tabletop-workspace {
+    flex: 1;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 2px dashed #94a3b8;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  /* NEW DESIGN: Unobtrusive Sidebar Checkpoint (Leaves the canvas fully visible) */
+  .checkpoint-sidebar {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 340px;
+    background: #ffffff;
+    border: 3px solid var(--success);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .checkpoint-sidebar h3 { margin: 0; color: var(--success); font-size: 16px; display: flex; align-items: center; gap: 6px; }
+  .checkpoint-sidebar p { color: #475569; font-size: 13px; margin: 0; line-height: 1.4; }
+  
+  .checkpoint-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+  }
+  .checkpoint-sidebar input { flex: 1; padding: 10px; font-size: 16px; text-align: center; }
+  .checkpoint-sidebar button { background: var(--success); color: white; border: none; padding: 10px 15px; font-size: 14px; }
+
+  .msg-box { font-weight: bold; font-size: 13px; min-height: 18px; }
+
+  #dragCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Fraction Builder Challenge Desk 🎯</h1>
+<p class="subtitle">
+  Look at the goal fraction. Type in the denominator to format your pies, spawn your pieces, and fill the pans to unlock the translation challenge!
+</p>
+
+<div class="lab-desk">
+  
+  <div class="control-panel">
+    
+    <div class="target-box">
+      <div class="target-title" id="goalTitle">🎯 Target Objective</div>
+      <div id="targetDisplayArea"></div>
+    </div>
+
+    <p class="section-title">1. Identify the Denominator</p>
+    <p style="margin: 0; font-size: 13px; color: #64748b; line-height: 1.2;">Type the bottom value to cut your pies:</p>
+    <div style="display: flex; gap: 8px; margin-top: 4px;">
+      <input type="number" id="denomInput" min="2" max="12" placeholder="e.g. 4" style="width: 90px; text-align: center;">
+      <button onclick="applyTypedDenominator()" style="background: #475569; color: white; border: none; padding: 0 15px; font-size: 14px; flex: 1;">Split Pies</button>
+    </div>
+
+    <p class="section-title" style="margin-top: 5px;">2. Spawn Pieces</p>
+    <button class="spawn-btn" onclick="spawnLoosePiece()">Dispense Piece ➕</button>
+
+    <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 14px; line-height: 1.4; color: #475569; margin-top: 5px;">
+      Slices on Table: <strong id="tableCountText" style="color:var(--primary);">0</strong><br>
+      Pans Contain: <strong id="currentBuildText" style="color:var(--success);">0 slices</strong>
+    </div>
+
+    <button class="next-btn" onclick="generateNewTarget()">Skip / New Goal ➡️</button>
+  </div>
+
+  <div class="tabletop-workspace" id="workspaceContainer">
+    
+    <div class="checkpoint-sidebar" id="checkpointCard">
+      <h3>🏁 Translation Checkpoint!</h3>
+      <p id="modalPrompt">Look at your workspace behind this card. Translate your active build into its other format!</p>
+      
+      <div class="checkpoint-input-row">
+        <input type="text" id="studentResponse" placeholder="e.g. 2 1/4 or 9/4">
+        <button onclick="verifyTranslationAnswer()">Verify</button>
+      </div>
+      <div id="modalMessage" class="msg-box"></div>
+      
+      <button id="modalCloseBtn" style="margin-top: 5px; display: none; background: #0f172a; color: white; padding: 8px;" onclick="closeCheckpoint()">Next Goal ➡️</button>
+    </div>
+
+    <canvas id="dragCanvas"></canvas>
+  </div>
+
+</div>
+
+<script>
+let targetType = "improper"; 
+let goalPiecesNeeded = 7;
+let goalDenominator = 4;
+
+let userDenominator = 4;
+let loosePieces = [];
+let targetPans = [];
+
+let activeDraggedItem = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+let checkpointActive = false;
+
+const canvas = document.getElementById('dragCanvas');
+const ctx = canvas.getContext('2d');
+const workspace = document.getElementById('workspaceContainer');
+
+function initDesk() {
+  resizeCanvas();
+  generateNewTarget();
+}
+
+function resizeCanvas() {
+  canvas.width = workspace.clientWidth;
+  canvas.height = workspace.clientHeight;
+}
+
+function generateNewTarget() {
+  const denominators = [2, 3, 4, 5, 6, 8];
+  goalDenominator = denominators[Math.floor(Math.random() * denominators.length)];
+  
+  let minPieces = goalDenominator + 1;
+  let maxPieces = (goalDenominator * 3) - 1;
+  goalPiecesNeeded = Math.floor(Math.random() * (maxPieces - minPieces + 1)) + minPieces;
+
+  targetType = Math.random() > 0.5 ? "improper" : "mixed";
+  
+  const displayArea = document.getElementById('targetDisplayArea');
+  const title = document.getElementById('goalTitle');
+
+  if (targetType === "improper") {
+    title.textContent = "🎯 Build This Improper Fraction";
+    displayArea.innerHTML = `
+      <div class="fraction-display">
+        <div>${goalPiecesNeeded}</div>
+        <div class="fraction-line"></div>
+        <div>${goalDenominator}</div>
+      </div>`;
+  } else {
+    title.textContent = "🎯 Build This Mixed Number";
+    let whole = Math.floor(goalPiecesNeeded / goalDenominator);
+    let rem = goalPiecesNeeded % goalDenominator;
+    displayArea.innerHTML = `
+      <div class="mixed-display">
+        <div class="whole-part">${whole}</div>
+        <div class="fraction-display" style="font-size:28px;">
+          <div>${rem}</div>
+          <div class="fraction-line" style="border-bottom-width:3px;"></div>
+          <div>${goalDenominator}</div>
+        </div>
+      </div>`;
+  }
+
+  loosePieces = [];
+  document.getElementById('checkpointCard').style.display = 'none';
+  document.getElementById('denomInput').value = '';
+  document.getElementById('studentResponse').value = '';
+  document.getElementById('modalMessage').textContent = '';
+  document.getElementById('modalCloseBtn').style.display = 'none';
+  checkpointActive = false;
+
+  // Start with default denominator display until they type theirs
+  userDenominator = 4; 
+  setupBakingPans(1);
+  updateScoreboard();
+  drawEverything();
+}
+
+function applyTypedDenominator() {
+  let val = parseInt(document.getElementById('denomInput').value);
+  if (isNaN(val) || val < 2 || val > 12) {
+    alert("Please enter a valid denominator number between 2 and 12.");
+    return;
+  }
+  userDenominator = val;
+  loosePieces = [];
+  setupBakingPans(1);
+  updateScoreboard();
+  drawEverything();
+}
+
+function setupBakingPans(numberOfPansNeeded) {
+  targetPans = [];
+  const panRadius = 60;
+  const spacing = 175;
+  const startY = canvas.height / 2;
+  let startX = (canvas.width / 2) - (((numberOfPansNeeded - 1) * spacing) / 2);
+
+  for (let i = 0; i < numberOfPansNeeded; i++) {
+    targetPans.push({
+      x: startX + (i * spacing),
+      y: startY,
+      radius: panRadius,
+      slots: Array(userDenominator).fill(false)
+    });
+  }
+}
+
+function checkAndExpandPans() {
+  let totalSlots = targetPans.length * userDenominator;
+  let filledSlots = countPlacedPieces();
+
+  if (filledSlots === totalSlots && targetPans.length < 4) {
+    let currentPanCount = targetPans.length;
+    let currentStates = [];
+    targetPans.forEach(p => currentStates.push(...p.slots));
+
+    setupBakingPans(currentPanCount + 1);
+
+    let idx = 0;
+    targetPans.forEach(p => {
+      for(let s=0; s < userDenominator; s++) {
+        if(idx < currentStates.length) {
+          p.slots[s] = currentStates[idx];
+          idx++;
+        }
+      }
+    });
+  }
+}
+
+function spawnLoosePiece() {
+  if (checkpointActive) return;
+  loosePieces.push({
+    x: 50 + Math.random() * 40,
+    y: 70 + Math.random() * 150,
+    radius: 50,
+    isPlaced: false
+  });
+  updateScoreboard();
+  drawEverything();
+}
+
+function countPlacedPieces() {
+  let count = 0;
+  targetPans.forEach(pan => {
+    pan.slots.forEach(slot => { if(slot) count++; });
+  });
+  return count;
+}
+
+function updateScoreboard() {
+  let placed = countPlacedPieces();
+  document.getElementById('tableCountText').textContent = loosePieces.length;
+  document.getElementById('currentBuildText').textContent = `${placed} slice${placed !== 1 ? 's':''}`;
+
+  if (userDenominator === goalDenominator && placed === goalPiecesNeeded && !checkpointActive) {
+    triggerTranslationCheckpoint();
+  }
+}
+
+function triggerTranslationCheckpoint() {
+  checkpointActive = true;
+  const card = document.getElementById('checkpointCard');
+  const prompt = document.getElementById('modalPrompt');
+  
+  card.style.display = 'flex';
+  
+  if (targetType === "improper") {
+    prompt.innerHTML = `Nice build! Look closely at your pies on the left. What is the <strong>Mixed Number</strong> version of what you see?`;
+  } else {
+    prompt.innerHTML = `Nice build! Count every single colored wedge currently in the pans. What is the <strong>Improper Fraction</strong> value?`;
+  }
+}
+
+function verifyTranslationAnswer() {
+  const ans = document.getElementById('studentResponse').value.trim().replace(/\s+/g, ' ');
+  const msg = document.getElementById('modalMessage');
+  
+  let whole = Math.floor(goalPiecesNeeded / goalDenominator);
+  let rem = goalPiecesNeeded % goalDenominator;
+  
+  let correctMixedAnswer = `${whole} ${rem}/${goalDenominator}`;
+  let correctImproperAnswer = `${goalPiecesNeeded}/${goalDenominator}`;
+
+  if (targetType === "improper") {
+    if (ans === correctMixedAnswer) {
+      msg.style.color = "var(--success)";
+      msg.textContent = "🎉 Correct! Calculation is perfect.";
+      document.getElementById('modalCloseBtn').style.display = 'block';
+    } else {
+      msg.style.color = "var(--warning)";
+      msg.textContent = `❌ Look at the pies: find the full ones and extra leftover parts.`;
+    }
+  } else {
+    if (ans === correctImproperAnswer) {
+      msg.style.color = "var(--success)";
+      msg.textContent = "🎉 Correct! Calculation is perfect.";
+      document.getElementById('modalCloseBtn').style.display = 'block';
+    } else {
+      msg.style.color = "var(--warning)";
+      msg.textContent = `❌ Count up all individual colored wedge shapes on the board.`;
+    }
+  }
+}
+
+function closeCheckpoint() {
+  generateNewTarget();
+}
+
+function drawEverything() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  targetPans.forEach((pan, pIdx) => {
+    let sliceAngle = (2 * Math.PI) / userDenominator;
+
+    ctx.beginPath();
+    ctx.arc(pan.x, pan.y, pan.radius, 0, 2 * Math.PI);
+    ctx.fillStyle = "#f8fafc";
+    ctx.fill();
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    for (let s = 0; s < userDenominator; s++) {
+      let startAngle = (s * sliceAngle) - Math.PI / 2;
+      let endAngle = ((s + 1) * sliceAngle) - Math.PI / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(pan.x, pan.y);
+      ctx.arc(pan.x, pan.y, pan.radius, startAngle, endAngle);
+      ctx.closePath();
+      
+      if (pan.slots[s]) {
+        ctx.fillStyle = (userDenominator === goalDenominator) ? "#16a34a" : "#2563eb"; 
+        ctx.fill();
+      }
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+    
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`Pan #${pIdx + 1}`, pan.x, pan.y + pan.radius + 20);
+  });
+
+  loosePieces.forEach(piece => {
+    let sliceAngle = (2 * Math.PI) / userDenominator;
+    
+    ctx.beginPath();
+    ctx.moveTo(piece.x, piece.y);
+    ctx.arc(piece.x, piece.y, piece.radius, -Math.PI/2, (-Math.PI/2) + sliceAngle);
+    ctx.closePath();
+    
+    ctx.fillStyle = "#3b82f6";
+    ctx.fill();
+    ctx.strokeStyle = "#1e3a8a";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 12px sans-serif";
+    ctx.textAlign = "center";
+    let textAngle = (-Math.PI/2) + (sliceAngle / 2);
+    let textX = piece.x + (piece.radius * 0.5) * Math.cos(textAngle);
+    let textY = piece.y + (piece.radius * 0.5) * Math.sin(textAngle) + 4;
+    ctx.fillText(`1/${userDenominator}`, textX, textY);
+  });
+}
+
+function getEventCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  if (e.touches && e.touches.length > 0) {
+    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+  }
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function engageDrag(coords) {
+  if (checkpointActive) return;
+  for (let i = loosePieces.length - 1; i >= 0; i--) {
+    let p = loosePieces[i];
+    let dist = Math.hypot(coords.x - p.x, coords.y - p.y);
+    if (dist <= p.radius) {
+      activeDraggedItem = p;
+      dragOffsetX = coords.x - p.x;
+      dragOffsetY = coords.y - p.y;
+      loosePieces.splice(i, 1);
+      loosePieces.push(activeDraggedItem);
+      break;
+    }
+  }
+
+  if (!activeDraggedItem) {
+    for (let pIdx = 0; pIdx < targetPans.length; pIdx++) {
+      let pan = targetPans[pIdx];
+      let dist = Math.hypot(coords.x - pan.x, coords.y - pan.y);
+      if (dist <= pan.radius) {
+        for (let sIdx = userDenominator - 1; sIdx >= 0; sIdx--) {
+          if (pan.slots[sIdx]) {
+            pan.slots[sIdx] = false;
+            let restored = { x: coords.x, y: coords.y, radius: 50, isPlaced: false };
+            loosePieces.push(restored);
+            activeDraggedItem = restored;
+            dragOffsetX = 0;
+            dragOffsetY = 0;
+            updateScoreboard();
+            drawEverything();
+            return;
+          }
+        }
+      }
+    }
+  }
+}
+
+function executeMove(coords) {
+  if (!activeDraggedItem) return;
+  activeDraggedItem.x = coords.x - dragOffsetX;
+  activeDraggedItem.y = coords.y - dragOffsetY;
+  drawEverything();
+}
+
+function releaseDrag() {
+  if (!activeDraggedItem) return;
+  let item = activeDraggedItem;
+  activeDraggedItem = null;
+
+  let snapped = false;
+  for (let pIdx = 0; pIdx < targetPans.length; pIdx++) {
+    let pan = targetPans[pIdx];
+    let dist = Math.hypot(item.x - pan.x, item.y - pan.y);
+
+    if (dist <= pan.radius + 40) {
+      for (let sIdx = 0; sIdx < userDenominator; sIdx++) {
+        if (!pan.slots[sIdx]) {
+          pan.slots[sIdx] = true;
+          snapped = true;
+          let index = loosePieces.indexOf(item);
+          if (index > -1) loosePieces.splice(index, 1);
+          break;
+        }
+      }
+    }
+    if (snapped) break;
+  }
+
+  checkAndExpandPans();
+  updateScoreboard();
+  drawEverything();
+}
+
+canvas.addEventListener('mousedown', (e) => engageDrag(getEventCoords(e)));
+window.addEventListener('mousemove', (e) => executeMove(getEventCoords(e)));
+window.addEventListener('mouseup', releaseDrag);
+
+canvas.addEventListener('touchstart', (e) => { e.preventDefault(); engageDrag(getEventCoords(e)); });
+canvas.addEventListener('touchmove', (e) => { e.preventDefault(); executeMove(getEventCoords(e)); });
+canvas.addEventListener('touchend', releaseDrag);
+
+window.onload = initDesk;
+</script>
+</body>
+</html>
